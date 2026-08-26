@@ -1,0 +1,6 @@
+{
+  "name": "Controle Financeiro Pessoal",
+  "description": "Sistema completo de gestão e controle financeiro pessoal com suporte a contas, categorias, receitas, despesas, cartões e relatórios com Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
