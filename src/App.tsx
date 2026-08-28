@@ -14,6 +14,8 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { NewTransactionModal } from './components/transactions/NewTransactionModal';
 import { AuthModal } from './pages/AuthModal';
+import { supabase, isSupabaseConfigured } from './services/supabase';
+import { useEffect } from 'react';
 import { 
   CheckCircle2, 
   AlertCircle, 
