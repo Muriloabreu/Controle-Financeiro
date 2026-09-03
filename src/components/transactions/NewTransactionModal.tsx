@@ -184,7 +184,7 @@ export const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
             <input
               type="text"
               required
-              placeholder={type === 'EXPENSE' ? 'Ex: Supermercado, Aluguel, Farmácia...' : 'Ex: Salário, Freelance, Rendimentos...'}
+              placeholder={type === 'EXPENSE' ? 'Descrição da despesa' : 'Descrição da receita'}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-colors"

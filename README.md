@@ -56,7 +56,7 @@ Abra seu navegador em `http://localhost:3000`.
 - Atualização e exclusão com recálculo retroativo de saldos.
 
 ### 🔹 3. Contas Bancárias & Carteiras
-- Gestão de múltiplas contas (Conta Corrente, Poupança, Carteira Física, Investimentos).
+- Gestão de múltiplas contas financeiras.
 - Saldo inicial, saldo atualizado em tempo real e cores personalizadas.
 
 ### 🔹 4. Cartões de Crédito, Faturas & Parcelamentos
@@ -70,7 +70,7 @@ Abra seu navegador em `http://localhost:3000`.
 - Barras de progresso com alertas visuais automáticos aos 80% e 100%+ do limite consumido.
 
 ### 🔹 6. Metas & Objetivos Financeiros
-- Acompanhamento de metas (Reserva de Emergência, Viagem, Comprar Carro).
+- Acompanhamento de metas financeiras.
 - Aportes rápidos com débito opcional em conta bancária e barra de progresso em tempo real.
 
 ### 🔹 7. Relatórios Financeiros Anuais
@@ -81,7 +81,6 @@ Abra seu navegador em `http://localhost:3000`.
 
 ### 🔹 8. Backup, Restauração e Segurança
 - Exportação e importação completa de dados em JSON.
-- Modo de demonstração local de alta performance com persistência no navegador.
 - Integração transparente com Supabase via variáveis de ambiente.
 
 ---
@@ -95,7 +94,7 @@ Abra seu navegador em `http://localhost:3000`.
 
 ```env
 VITE_SUPABASE_URL="https://seu-projeto.supabase.co"
-VITE_SUPABASE_ANON_KEY="sua-anon-key-aqui"
+VITE_SUPABASE_PUBLISHABLE_KEY="sua-anon-key-aqui"
 ```
 
 ---
@@ -137,6 +136,5 @@ VITE_SUPABASE_ANON_KEY="sua-anon-key-aqui"
     │   └── index.ts
     └── utils/
         ├── formatters.ts
-        └── mockData.ts
 ```
 # Controle-Financeiro

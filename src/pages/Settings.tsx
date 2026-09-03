@@ -130,14 +130,14 @@ export const Settings: React.FC = () => {
 
           <button
             onClick={() => {
-              if (window.confirm('Deseja realmente restaurar os dados de exemplo padrão?')) {
+              if (window.confirm('Deseja realmente limpar todos os dados armazenados localmente neste navegador?')) {
                 resetToDefaultData();
               }
             }}
             className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold text-xs border border-rose-500/30 flex items-center gap-2 transition-all"
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Resetar Dados para Demonstração</span>
+            <span>Limpar Dados Locais</span>
           </button>
         </div>
 

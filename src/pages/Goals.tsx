@@ -207,7 +207,7 @@ export const Goals: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Reserva de Emergência, Viagem Disney, Carro Novo..."
+                  placeholder="Nome da meta financeira"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"

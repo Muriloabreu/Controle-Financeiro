@@ -90,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenNewTxModal, onOpenAuthModa
           >
             <Database className={`w-3.5 h-3.5 ${isUsingSupabase ? 'text-emerald-400' : 'text-amber-400'}`} />
             <span className="font-medium text-[11px]">
-              {isUsingSupabase ? 'Supabase Conectado' : 'Supabase (Demo Mode)'}
+              {isUsingSupabase ? 'Supabase Conectado' : 'Supabase não configurado'}
             </span>
           </button>
 

@@ -109,11 +109,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                   isSupabaseConfigured ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
                 }`}>
-                  {isSupabaseConfigured ? '✓ Supabase Ativo' : '● Modo Demonstração Local'}
+                  {isSupabaseConfigured ? '✓ Supabase Ativo' : '● Supabase não configurado'}
                 </span>
               </div>
               <p className="text-slate-400 text-[11px]">
-                O aplicativo já vem 100% funcional com armazenamento local e dados de exemplo, e pode ser conectado ao seu Supabase PostgreSQL a qualquer momento.
+                A aplicação utiliza o Supabase como backend. Configure as variáveis de ambiente antes de realizar login ou cadastrar usuários.
               </p>
             </div>
 
@@ -123,8 +123,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <li>Acesse seu painel no <strong className="text-emerald-400">supabase.com</strong>.</li>
                 <li>Abra o <strong>SQL Editor</strong> do seu projeto Supabase.</li>
                 <li>Copie e execute o arquivo <code className="bg-slate-950 px-1 py-0.5 rounded text-emerald-400 font-mono">src/db/schema.sql</code> gerado no projeto.</li>
-                <li>Copie sua <strong>Project URL</strong> e <strong>Anon Public Key</strong> em <strong className="text-slate-200">Project Settings → API</strong>.</li>
-                <li>Adicione as variáveis <code className="text-emerald-400">VITE_SUPABASE_URL</code> e <code className="text-emerald-400">VITE_SUPABASE_ANON_KEY</code> nas configurações de Secrets ou no arquivo <code className="text-slate-200">.env</code>.</li>
+                <li>Copie sua <strong>Project URL</strong> e <strong>Publishable Key</strong> em <strong className="text-slate-200">Project Settings → API</strong>.</li>
+                <li>Adicione as variáveis <code className="text-emerald-400">VITE_SUPABASE_URL</code> e <code className="text-emerald-400">VITE_SUPABASE_PUBLISHABLE_KEY</code> nas variáveis de ambiente da Vercel (tipo Config) ou no arquivo <code className="text-slate-200">.env</code>.</li>
               </ol>
             </div>
 

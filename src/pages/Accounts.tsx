@@ -154,7 +154,7 @@ export const Accounts: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Nubank, Banco do Brasil, Itaú, Dinheiro..."
+                  placeholder="Nome ou instituição da conta"
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"

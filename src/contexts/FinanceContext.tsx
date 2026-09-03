@@ -13,14 +13,6 @@ import {
   TransactionStatus,
   PaymentMethod
 } from '../types';
-import { 
-  INITIAL_ACCOUNTS, 
-  INITIAL_CATEGORIES, 
-  INITIAL_CREDIT_CARDS, 
-  INITIAL_TRANSACTIONS, 
-  INITIAL_GOALS, 
-  INITIAL_BUDGETS 
-} from '../utils/mockData';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { roundMoney } from '../utils/formatters';
 
@@ -106,72 +98,46 @@ interface FinanceContextType {
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
+const loadLocalArray = <T,>(key: string): T[] => {
+  const local = localStorage.getItem(key);
+  if (!local) return [];
+
+  try {
+    const parsed = JSON.parse(local);
+    if (!Array.isArray(parsed)) return [];
+
+    // Remove automaticamente registros antigos do antigo modo de demonstração.
+    if (parsed.some((item) => item?.user_id === 'demo-user')) {
+      localStorage.removeItem(key);
+      return [];
+    }
+
+    return parsed as T[];
+  } catch {
+    localStorage.removeItem(key);
+    return [];
+  }
+};
+
+
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1); // 1-12
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
 
-  const [accounts, setAccounts] = useState<Account[]>(() => {
-    const local = localStorage.getItem('fin_accounts');
-    return local ? JSON.parse(local) : INITIAL_ACCOUNTS;
-  });
+  const [accounts, setAccounts] = useState<Account[]>(() => loadLocalArray<Account>('fin_accounts'));
 
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const local = localStorage.getItem('fin_categories');
-    return local ? JSON.parse(local) : INITIAL_CATEGORIES;
-  });
+  const [categories, setCategories] = useState<Category[]>(() => loadLocalArray<Category>('fin_categories'));
 
-  const [creditCards, setCreditCards] = useState<CreditCard[]>(() => {
-    const local = localStorage.getItem('fin_credit_cards');
-    return local ? JSON.parse(local) : INITIAL_CREDIT_CARDS;
-  });
+  const [creditCards, setCreditCards] = useState<CreditCard[]>(() => loadLocalArray<CreditCard>('fin_credit_cards'));
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const local = localStorage.getItem('fin_transactions');
-    return local ? JSON.parse(local) : INITIAL_TRANSACTIONS;
-  });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => loadLocalArray<Transaction>('fin_transactions'));
 
-  const [goals, setGoals] = useState<FinancialGoal[]>(() => {
-    const local = localStorage.getItem('fin_goals');
-    return local ? JSON.parse(local) : INITIAL_GOALS;
-  });
+  const [goals, setGoals] = useState<FinancialGoal[]>(() => loadLocalArray<FinancialGoal>('fin_goals'));
 
-  const [budgets, setBudgets] = useState<Budget[]>(() => {
-    const local = localStorage.getItem('fin_budgets');
-    return local ? JSON.parse(local) : INITIAL_BUDGETS;
-  });
+  const [budgets, setBudgets] = useState<Budget[]>(() => loadLocalArray<Budget>('fin_budgets'));
 
-  const [recurring, setRecurring] = useState<RecurringTransaction[]>(() => {
-    const local = localStorage.getItem('fin_recurring');
-    return local ? JSON.parse(local) : [
-      {
-        id: 'rec-1',
-        user_id: 'demo-user',
-        description: 'Aluguel do Apartamento',
-        amount: 1800.00,
-        type: 'EXPENSE',
-        category_id: 'cat-exp-3',
-        account_id: 'acc-1',
-        frequency: 'MONTHLY',
-        start_date: '2026-01-05',
-        day_of_period: 5,
-        is_active: true,
-      },
-      {
-        id: 'rec-2',
-        user_id: 'demo-user',
-        description: 'Internet Fibra Óptica',
-        amount: 120.00,
-        type: 'EXPENSE',
-        category_id: 'cat-exp-5',
-        account_id: 'acc-1',
-        frequency: 'MONTHLY',
-        start_date: '2026-01-22',
-        day_of_period: 22,
-        is_active: true,
-      }
-    ];
-  });
+  const [recurring, setRecurring] = useState<RecurringTransaction[]>(() => loadLocalArray<RecurringTransaction>('fin_recurring'));
 
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -184,6 +150,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const clearToast = useCallback(() => setToastMessage(null), []);
+
+  const getAuthenticatedUserId = useCallback(async (): Promise<string> => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase não está configurado.');
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+      throw new Error('Usuário não autenticado.');
+    }
+
+    return user.id;
+  }, []);
 
   // Persistência local no navegador
   useEffect(() => {
@@ -236,9 +215,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           supabase.from('recurring_transactions').select('*').eq('user_id', user.id),
         ]);
 
-        if (accRes.data && accRes.data.length > 0) setAccounts(accRes.data);
-        if (catRes.data && catRes.data.length > 0) setCategories(catRes.data);
-        if (cardRes.data && cardRes.data.length > 0) setCreditCards(cardRes.data);
+        if (accRes.data) setAccounts(accRes.data);
+        if (catRes.data) setCategories(catRes.data);
+        if (cardRes.data) setCreditCards(cardRes.data);
         if (txRes.data) setTransactions(txRes.data);
         if (goalRes.data) setGoals(goalRes.data);
         if (bgRes.data) setBudgets(bgRes.data);
@@ -331,7 +310,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       list.push({
         id: `inv-${card.id}-${selectedYear}-${selectedMonth}`,
-        user_id: 'demo-user',
+        user_id: card.user_id,
         credit_card_id: card.id,
         month: selectedMonth,
         year: selectedYear,
@@ -395,46 +374,24 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Ações de Transações
   const addTransaction = async (txData: Omit<Transaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    const newId = 'tx-' + Date.now();
-    const newTx: Transaction = {
-      ...txData,
-      id: newId,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      category: categories.find(c => c.id === txData.category_id),
-      account: accounts.find(a => a.id === txData.account_id),
-      credit_card: creditCards.find(c => c.id === txData.credit_card_id),
-    };
+    try {
+      const userId = await getAuthenticatedUserId();
+      const { data, error } = await supabase!
+        .from('transactions')
+        .insert({ ...txData, user_id: userId })
+        .select('*, category:categories(*), account:accounts(*), credit_card:credit_cards(*)')
+        .single();
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data, error } = await supabase
-            .from('transactions')
-            .insert({ ...txData, user_id: user.id })
-            .select('*, category:categories(*), account:accounts(*), credit_card:credit_cards(*)')
-            .single();
-
-          if (error) throw error;
-          if (data) {
-            setTransactions(prev => [data, ...prev]);
-            showToast('Lançamento registrado com sucesso no Supabase!', 'success');
-            return;
-          }
-        }
-      } catch (err: any) {
-        console.warn('Erro ao salvar no Supabase, mantendo local:', err);
+      if (error) throw error;
+      if (data) {
+        setTransactions(prev => [data, ...prev]);
+        showToast('Lançamento registrado com sucesso!', 'success');
       }
+    } catch (err: any) {
+      console.error('Erro ao salvar lançamento:', err);
+      showToast(err?.message || 'Não foi possível salvar o lançamento.', 'error');
+      throw err;
     }
-
-    setTransactions(prev => {
-      const updated = [newTx, ...prev];
-      setAccounts(accs => recalculateAccountBalances(updated, accs));
-      return updated;
-    });
-
-    showToast('Lançamento cadastrado com sucesso!', 'success');
   };
 
   // Compras Parceladas (Ex: 12x no cartão)
@@ -451,6 +408,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const installmentGroupId = 'inst-' + Date.now();
     const installmentValue = roundMoney(totalAmount / installments);
 
+    const userId = await getAuthenticatedUserId();
     const [firstY, firstM, firstD] = firstDate.split('-').map(Number);
     const newTxs: Transaction[] = [];
 
@@ -466,7 +424,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       newTxs.push({
         id: `tx-inst-${installmentGroupId}-${i}`,
-        user_id: 'demo-user',
+        user_id: userId,
         description: `${description} (${i}/${installments})`,
         amount: i === installments ? roundMoney(totalAmount - installmentValue * (installments - 1)) : installmentValue,
         type: 'EXPENSE',
@@ -532,11 +490,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Ações de Contas
   const addAccount = async (accountData: Omit<Account, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    const userId = await getAuthenticatedUserId();
     const newId = 'acc-' + Date.now();
     const newAcc: Account = {
       ...accountData,
       id: newId,
-      user_id: 'demo-user',
+      user_id: userId,
       current_balance: accountData.initial_balance,
       is_active: true,
       created_at: new Date().toISOString(),
@@ -588,11 +547,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Ações de Cartões de Crédito
   const addCreditCard = async (cardData: Omit<CreditCard, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    const userId = await getAuthenticatedUserId();
     const newId = 'card-' + Date.now();
     const newCard: CreditCard = {
       ...cardData,
       id: newId,
-      user_id: 'demo-user',
+      user_id: userId,
       created_at: new Date().toISOString(),
     };
     setCreditCards(prev => [...prev, newCard]);
@@ -635,10 +595,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Metas Financeiras
   const addGoal = async (goalData: Omit<FinancialGoal, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    const userId = await getAuthenticatedUserId();
     const newGoal: FinancialGoal = {
       ...goalData,
       id: 'goal-' + Date.now(),
-      user_id: 'demo-user',
+      user_id: userId,
       created_at: new Date().toISOString(),
     };
     setGoals(prev => [...prev, newGoal]);
@@ -683,6 +644,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Orçamentos
   const setCategoryBudget = async (categoryId: string, limit: number, month = selectedMonth, year = selectedYear) => {
+    const userId = await getAuthenticatedUserId();
     setBudgets(prev => {
       const existing = prev.find(b => b.category_id === categoryId && b.month === month && b.year === year);
       if (existing) {
@@ -690,7 +652,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       } else {
         return [...prev, {
           id: 'bg-' + Date.now(),
-          user_id: 'demo-user',
+          user_id: userId,
           category_id: categoryId,
           month,
           year,
@@ -709,10 +671,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Recorrências
   const addRecurring = async (recData: Omit<RecurringTransaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    const userId = await getAuthenticatedUserId();
     const newRec: RecurringTransaction = {
       ...recData,
       id: 'rec-' + Date.now(),
-      user_id: 'demo-user',
+      user_id: userId,
       created_at: new Date().toISOString(),
     };
     setRecurring(prev => [...prev, newRec]);
@@ -759,13 +722,14 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const resetToDefaultData = () => {
-    setAccounts(INITIAL_ACCOUNTS);
-    setCategories(INITIAL_CATEGORIES);
-    setCreditCards(INITIAL_CREDIT_CARDS);
-    setTransactions(INITIAL_TRANSACTIONS);
-    setGoals(INITIAL_GOALS);
-    setBudgets(INITIAL_BUDGETS);
-    showToast('Dados reiniciados com valores padrão de demonstração.', 'info');
+    setAccounts([]);
+    setCategories([]);
+    setCreditCards([]);
+    setTransactions([]);
+    setGoals([]);
+    setBudgets([]);
+    setRecurring([]);
+    showToast('Dados locais removidos.', 'info');
   };
 
   const value = {

@@ -279,7 +279,7 @@ export const CreditCards: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Nubank Ultravioleta, Itaú Visa, XP..."
+                  placeholder="Nome do cartão"
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
@@ -291,7 +291,7 @@ export const CreditCards: React.FC = () => {
                   <label className="block font-semibold text-slate-300 mb-1">Banco Emissor</label>
                   <input
                     type="text"
-                    placeholder="Ex: Nubank, Itaú, Inter"
+                    placeholder="Instituição financeira"
                     value={cardBank}
                     onChange={(e) => setCardBank(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"

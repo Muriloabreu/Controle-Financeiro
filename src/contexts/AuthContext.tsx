@@ -15,14 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('fin_user');
-    return saved ? JSON.parse(saved) : {
-      id: 'demo-user',
-      email: 'usuario@exemplo.com.br',
-      full_name: 'Usuário Demonstração',
-    };
-  });
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -67,15 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) return { error: error.message };
         return {};
       } else {
-        // Modo local/demo
-        const demoUser: UserProfile = {
-          id: 'user-' + Date.now(),
-          email,
-          full_name: email.split('@')[0],
-        };
-        setUser(demoUser);
-        localStorage.setItem('fin_user', JSON.stringify(demoUser));
-        return {};
+        return { error: 'Supabase não está configurado. Configure a conexão antes de entrar.' };
       }
     } finally {
       setIsLoading(false);
@@ -96,14 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) return { error: error.message };
         return {};
       } else {
-        const demoUser: UserProfile = {
-          id: 'user-' + Date.now(),
-          email,
-          full_name: name,
-        };
-        setUser(demoUser);
-        localStorage.setItem('fin_user', JSON.stringify(demoUser));
-        return {};
+        return { error: 'Supabase não está configurado. Configure a conexão antes de cadastrar um usuário.' };
       }
     } finally {
       setIsLoading(false);
@@ -124,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) return { error: error.message };
       return {};
     }
-    return {};
+    return { error: 'Supabase não está configurado.' };
   };
 
   return (
