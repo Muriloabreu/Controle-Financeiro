@@ -554,28 +554,196 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Ações de Categorias
   const addCategory = async (catData: Omit<Category, 'id' | 'created_at'>) => {
-    const newCat: Category = {
-      ...catData,
-      id: 'cat-' + Date.now(),
-      is_default: false,
-    };
-    setCategories(prev => [...prev, newCat]);
-    showToast('Categoria criada com sucesso!', 'success');
+    if (!isSupabaseConfigured || !supabase) {
+      showToast('Supabase não está configurado. Não foi possível salvar a categoria.', 'error');
+      throw new Error('Cliente Supabase não configurado.');
+    }
+
+    try {
+      const userId = await getAuthenticatedUserId();
+      const normalizedName = catData.name.trim();
+
+      if (!normalizedName) {
+        throw new Error('Informe o nome da categoria.');
+      }
+
+      const duplicate = categories.some(
+        category =>
+          category.type === catData.type &&
+          category.name.trim().toLocaleLowerCase('pt-BR') ===
+            normalizedName.toLocaleLowerCase('pt-BR')
+      );
+
+      if (duplicate) {
+        throw new Error('Já existe uma categoria com esse nome para este tipo.');
+      }
+
+      const payload = {
+        user_id: userId,
+        name: normalizedName,
+        type: catData.type,
+        icon: catData.icon || 'tag',
+        color: catData.color || '#64748B',
+        is_default: false,
+      };
+
+      const { data, error } = await supabase
+        .from('categories')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error('O Supabase não retornou a categoria criada.');
+
+      setCategories(prev => [...prev, data as Category]);
+      showToast('Categoria criada com sucesso no Supabase!', 'success');
+    } catch (error: any) {
+      console.error('Erro ao criar categoria no Supabase:', error);
+      showToast(
+        error?.message
+          ? `Não foi possível criar a categoria: ${error.message}`
+          : 'Não foi possível criar a categoria no Supabase.',
+        'error'
+      );
+      throw error;
+    }
   };
 
   const updateCategory = async (id: string, catData: Partial<Category>) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...catData } : c));
-    showToast('Categoria atualizada com sucesso!', 'success');
+    if (!isSupabaseConfigured || !supabase) {
+      showToast('Supabase não está configurado. Não foi possível atualizar a categoria.', 'error');
+      throw new Error('Cliente Supabase não configurado.');
+    }
+
+    try {
+      const userId = await getAuthenticatedUserId();
+      const currentCategory = categories.find(category => category.id === id);
+
+      if (!currentCategory) {
+        throw new Error('Categoria não encontrada.');
+      }
+
+      if (currentCategory.is_default || !currentCategory.user_id) {
+        throw new Error('Categorias padrão do sistema não podem ser alteradas.');
+      }
+
+      const nextName =
+        catData.name !== undefined ? catData.name.trim() : currentCategory.name;
+      const nextType = catData.type ?? currentCategory.type;
+
+      if (!nextName) {
+        throw new Error('Informe o nome da categoria.');
+      }
+
+      const duplicate = categories.some(
+        category =>
+          category.id !== id &&
+          category.type === nextType &&
+          category.name.trim().toLocaleLowerCase('pt-BR') ===
+            nextName.toLocaleLowerCase('pt-BR')
+      );
+
+      if (duplicate) {
+        throw new Error('Já existe uma categoria com esse nome para este tipo.');
+      }
+
+      const payload: Partial<Category> & { updated_at?: string } = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (catData.name !== undefined) payload.name = nextName;
+      if (catData.type !== undefined) payload.type = catData.type;
+      if (catData.icon !== undefined) payload.icon = catData.icon;
+      if (catData.color !== undefined) payload.color = catData.color;
+
+      const { data, error } = await supabase
+        .from('categories')
+        .update(payload)
+        .eq('id', id)
+        .eq('user_id', userId)
+        .eq('is_default', false)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error('O Supabase não retornou a categoria atualizada.');
+
+      setCategories(prev =>
+        prev.map(category => category.id === id ? data as Category : category)
+      );
+      showToast('Categoria atualizada com sucesso!', 'success');
+    } catch (error: any) {
+      console.error('Erro ao atualizar categoria no Supabase:', error);
+      showToast(
+        error?.message
+          ? `Não foi possível atualizar a categoria: ${error.message}`
+          : 'Não foi possível atualizar a categoria no Supabase.',
+        'error'
+      );
+      throw error;
+    }
   };
 
   const deleteCategory = async (id: string) => {
-    const hasTransactions = transactions.some(t => t.category_id === id);
-    if (hasTransactions) {
-      showToast('Esta categoria possui lançamentos vinculados e não pode ser excluída.', 'error');
-      return;
+    if (!isSupabaseConfigured || !supabase) {
+      showToast('Supabase não está configurado. Não foi possível excluir a categoria.', 'error');
+      throw new Error('Cliente Supabase não configurado.');
     }
-    setCategories(prev => prev.filter(c => c.id !== id));
-    showToast('Categoria removida!', 'info');
+
+    try {
+      const userId = await getAuthenticatedUserId();
+      const currentCategory = categories.find(category => category.id === id);
+
+      if (!currentCategory) {
+        throw new Error('Categoria não encontrada.');
+      }
+
+      if (currentCategory.is_default || !currentCategory.user_id) {
+        throw new Error('Categorias padrão do sistema não podem ser excluídas.');
+      }
+
+      // Validamos no banco, e não somente no estado da tela, para evitar
+      // excluir uma categoria que possua lançamentos ainda não carregados.
+      const { data: linkedTransactions, error: linkedError } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('category_id', id)
+        .limit(1);
+
+      if (linkedError) throw linkedError;
+
+      if (linkedTransactions && linkedTransactions.length > 0) {
+        throw new Error(
+          'Esta categoria possui lançamentos vinculados e não pode ser excluída.'
+        );
+      }
+
+      const { data, error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+        .eq('is_default', false)
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error('O Supabase não confirmou a exclusão da categoria.');
+
+      setCategories(prev => prev.filter(category => category.id !== id));
+      showToast('Categoria excluída com sucesso!', 'info');
+    } catch (error: any) {
+      console.error('Erro ao excluir categoria no Supabase:', error);
+      showToast(
+        error?.message
+          ? `Não foi possível excluir a categoria: ${error.message}`
+          : 'Não foi possível excluir a categoria no Supabase.',
+        'error'
+      );
+      throw error;
+    }
   };
 
   // Ações de Cartões de Crédito
