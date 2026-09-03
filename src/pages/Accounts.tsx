@@ -32,20 +32,26 @@ export const Accounts: React.FC = () => {
 
     const parsedBalance = parseFloat(initialBalance.replace(',', '.')) || 0;
 
-    await addAccount({
-      name: name.trim(),
-      institution: institution.trim(),
-      type,
-      initial_balance: parsedBalance,
-      current_balance: parsedBalance,
-      color,
-      is_active: true,
-    });
+    try {
+      await addAccount({
+        name: name.trim(),
+        institution: institution.trim(),
+        type,
+        initial_balance: parsedBalance,
+        current_balance: parsedBalance,
+        color,
+        is_active: true,
+      });
 
-    setName('');
-    setInstitution('');
-    setInitialBalance('');
-    setIsModalOpen(false);
+      setName('');
+      setInstitution('');
+      setInitialBalance('');
+      setIsModalOpen(false);
+    } catch (error) {
+      // O FinanceContext já exibe a mensagem de erro.
+      // Mantemos a modal aberta para o usuário corrigir ou tentar novamente.
+      console.error('Falha ao cadastrar conta:', error);
+    }
   };
 
   return (

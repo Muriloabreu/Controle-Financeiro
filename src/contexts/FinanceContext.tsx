@@ -490,18 +490,51 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Ações de Contas
   const addAccount = async (accountData: Omit<Account, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    const userId = await getAuthenticatedUserId();
-    const newId = 'acc-' + Date.now();
-    const newAcc: Account = {
-      ...accountData,
-      id: newId,
-      user_id: userId,
-      current_balance: accountData.initial_balance,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    };
-    setAccounts(prev => [...prev, newAcc]);
-    showToast('Conta adicionada com sucesso!', 'success');
+    if (!isSupabaseConfigured || !supabase) {
+      showToast('Supabase não está configurado. Não foi possível salvar a conta.', 'error');
+      throw new Error('Cliente Supabase não configurado.');
+    }
+
+    try {
+      const userId = await getAuthenticatedUserId();
+
+      const payload = {
+        user_id: userId,
+        name: accountData.name.trim(),
+        institution: accountData.institution.trim(),
+        type: accountData.type,
+        initial_balance: roundMoney(accountData.initial_balance || 0),
+        current_balance: roundMoney(accountData.initial_balance || 0),
+        color: accountData.color || '#10B981',
+        is_active: true,
+      };
+
+      const { data, error } = await supabase
+        .from('accounts')
+        .insert(payload)
+        .select('*')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('O Supabase não retornou a conta criada.');
+      }
+
+      setAccounts(prev => [...prev, data as Account]);
+      showToast('Conta salva com sucesso no Supabase!', 'success');
+    } catch (error: any) {
+      console.error('Erro ao criar conta no Supabase:', error);
+      showToast(
+        error?.message
+          ? `Não foi possível criar a conta: ${error.message}`
+          : 'Não foi possível criar a conta no Supabase.',
+        'error'
+      );
+      throw error;
+    }
   };
 
   const updateAccount = async (id: string, accountData: Partial<Account>) => {
