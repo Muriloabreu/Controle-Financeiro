@@ -134,6 +134,16 @@ export default function App() {
   useEffect(() => {
     async function testarConexaoSupabase() {
       console.log(
+        'URL Supabase encontrada:',
+        Boolean(import.meta.env.VITE_SUPABASE_URL)
+      );
+
+      console.log(
+        'Publishable Key encontrada:',
+        Boolean(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
+      );
+
+      console.log(
         'Supabase configurado:',
         isSupabaseConfigured
       );
